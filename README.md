@@ -1,0 +1,1 @@
+In browser, clean and simple budget app written with JavaScript
