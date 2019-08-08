@@ -6,6 +6,22 @@ var budgetController = (function() {
         this.id = id;
         this.description = description;
         this.value = value;
+        this.percentage = -1; // In the beginning it's undefined
+    };
+
+    // Prototype method calculating the percentage - available  for all expense objects
+    Expense.prototype.calcPercentage = function(totalIncome) {
+
+        if (totalIncome > 0) {
+            this.percentage = Math.round((this.value / totalIncome) * 100);
+        } else {
+            this.percentage = -1;
+        }
+        
+    };
+
+    Expense.prototype.getPercentage = function() {
+        return this.percentage;
     };
 
     var Income = function(id, description, value) {
@@ -102,6 +118,32 @@ var budgetController = (function() {
             
         },
 
+        calculatePercentages: function() {
+            
+            /*Example
+            Expenses:
+            a = 20
+            b = 10
+            c = 40
+            totalIncome = 100
+
+            a = 20/100 = 20%
+            b = 10/100 = 10%
+            c = 40/100 = 40%
+            */
+
+            data.allItems.exp.forEach(function(cur) {
+                cur.calcPercentage(data.totals.inc); // Calculating percentage for each expense that is stored in data array
+            });
+        },
+
+        getPercentages: function() {
+            var allPerc = data.allItems.exp.map(function(cur) {
+                return cur.getPercentage();
+            });
+            return allPerc; // Array with all percentages
+        },
+ 
         getBudget: function() {
             return {
                 budget: data.budget,
@@ -132,7 +174,8 @@ var budgetController = (function() {
         incomeLabel: '.budget__income--value',
         expensesLabel: '.budget__expenses--value',
         percentageLabel: '.budget__expenses--percentage',
-        container: '.container'
+        container: '.container',
+        expensesPercLabel: '.item__percentage'
     }
 
     return {
@@ -201,6 +244,27 @@ var budgetController = (function() {
             }
         },
 
+        displayPercentages: function(percentages) { // Passing an array with percentages
+           var fields = document.querySelectorAll(DOMStrings.expensesPercLabel); // Returns nodeList
+
+        // nodeList doesn't have forEach method, because it's not an array. But instead of using the slice hack and convert nodeList into array, we can do better. Creating own forEach function for nodeLists instead of arrays. 
+
+            var nodeListForEach = function(list, callback) {
+                for (var i = 0; i < list.length; i++ ) { // nodeList has .length property
+                    callback(list[i], i); // current, index
+                }
+            };
+
+            nodeListForEach(fields, function(current, index) {
+                if (percentages[index] > 0) {
+                    current.textContent = percentages[index] + '%';
+                } else {
+                    current.textContent = '---';
+                }
+            });
+
+        },
+
         getDOMStrings: function() { // Exposing it to public to other controllers
             return DOMStrings;
         }
@@ -223,6 +287,19 @@ var budgetController = (function() {
         });
 
         document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem); // For Event Delegation
+
+    };
+
+    updatePercentages = function() {
+
+        // 1. Calculate percentages
+        budgetCtrl.calculatePercentages();
+
+        // 2. Read percentages from the budget controller
+        var percentages = budgetCtrl.getPercentages();
+
+        // 3. Update the UI with the new percentages
+        UICtrl.displayPercentages(percentages);
 
     };
 
@@ -258,6 +335,10 @@ var budgetController = (function() {
 
             // 5. Calculate and update budget 
             updateBudget();
+
+
+            // 6. Calculate and update percentages
+            updatePercentages();
         } 
         
     };
@@ -280,6 +361,9 @@ var budgetController = (function() {
 
             // 3. Update and show the new budget
             updateBudget();
+
+            // 4. Calculate and update percentages
+            updatePercentages();
 
         }
     };
