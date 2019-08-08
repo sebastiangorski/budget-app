@@ -206,6 +206,12 @@ var budgetController = (function() {
         return (type === 'exp' ? '-' : '+') + ' ' + int + '.' + dec;
     };
 
+    var nodeListForEach = function(list, callback) {
+        for (var i = 0; i < list.length; i++ ) { // nodeList has .length property
+            callback(list[i], i); // current, index
+        }
+    };
+
     return {
         getInput: function() {
             return {
@@ -280,12 +286,6 @@ var budgetController = (function() {
 
         // nodeList doesn't have forEach method, because it's not an array. But instead of using the slice hack and convert nodeList into array, we can do better. Creating own forEach function for nodeLists instead of arrays. 
 
-            var nodeListForEach = function(list, callback) {
-                for (var i = 0; i < list.length; i++ ) { // nodeList has .length property
-                    callback(list[i], i); // current, index
-                }
-            };
-
             nodeListForEach(fields, function(current, index) {
                 if (percentages[index] > 0) {
                     current.textContent = percentages[index] + '%';
@@ -306,6 +306,20 @@ var budgetController = (function() {
             month = now.getMonth();
             year = now.getFullYear();
             document.querySelector(DOMStrings.dateLabel).textContent = months[month] + ' ' + year;
+        },
+
+        changedType: function() {
+            var fields = document.querySelectorAll(
+                DOMStrings.inputType + ',' +
+                DOMStrings.inputDescription + ',' +
+                DOMStrings.inputValue
+            );
+
+            nodeListForEach(fields, function(cur) {
+                cur.classList.toggle('red-focus');
+            });
+
+            document.querySelector(DOMStrings.inputBtn).classList.toggle('red');
         },
 
         getDOMStrings: function() { // Exposing it to public to other controllers
@@ -330,6 +344,8 @@ var budgetController = (function() {
         });
 
         document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem); // For Event Delegation
+
+        document.querySelector(DOM.inputType).addEventListener('change', UICtrl.changedType);
 
     };
 
