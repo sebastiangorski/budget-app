@@ -1,1 +1,1 @@
-In browser, clean and simple budget app written with JavaScript
+In browser, clean and simple budget app written with vanilla JavaScript ES5.
