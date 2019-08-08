@@ -178,6 +178,33 @@ var budgetController = (function() {
         expensesPercLabel: '.item__percentage'
     }
 
+    var formatNumber = function(num, type) {
+        var numSplit, int, dec, type;
+        /*
+        + or - before the number
+        Exactly 2 decimal points
+        Comma separating thounsands
+
+        2310.4567 -> + 2,310.46
+        2000 -> + 2,000.00
+        */
+
+        num = Math.abs(num); // Overriding the num argument and stored
+        num = num.toFixed(2); // Method of the number prototype
+
+        numSplit = num.split('.'); // Diving the num we passed into two part - integer part and decimal part, both stored in an array
+
+        int = numSplit[0];
+        if (int.length > 3) { // .length tells us how many numbers are in a number
+            int = int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, 3); // That way it works for all cases, ex. 2310, output 2,310 AND 23510, output 23,510.
+        } 
+
+        dec = numSplit[1];
+
+        // If the type is 'exp', then the sign is '-', else the sign is '+'
+        return (type === 'exp' ? '-' : '+') + ' ' + int + '.' + dec;
+    };
+
     return {
         getInput: function() {
             return {
@@ -203,7 +230,7 @@ var budgetController = (function() {
             // Replace the placholder text with actual data
             newHtml = html.replace('%id%', obj.id);
             newHtml = newHtml.replace('%description%', obj.description);
-            newHtml = newHtml.replace('%value%', obj.value);
+            newHtml = newHtml.replace('%value%', formatNumber(obj.value, type));
 
             // Insert HTML into the DOM
             document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
@@ -232,9 +259,12 @@ var budgetController = (function() {
         },
 
         displayBudget: function(obj) {
-            document.querySelector(DOMStrings.budgetLabel).textContent = obj.budget;
-            document.querySelector(DOMStrings.incomeLabel).textContent = obj.totalInc;
-            document.querySelector(DOMStrings.expensesLabel).textContent = obj.totalExp;
+            var type;
+            obj.budget > 0 ? type = 'inc' : type = 'exp';
+
+            document.querySelector(DOMStrings.budgetLabel).textContent = formatNumber(obj.budget, type);
+            document.querySelector(DOMStrings.incomeLabel).textContent = formatNumber(obj.totalInc, 'inc');
+            document.querySelector(DOMStrings.expensesLabel).textContent = formatNumber(obj.totalExp, 'exp');
             
 
             if (obj.percentage > 0) {
